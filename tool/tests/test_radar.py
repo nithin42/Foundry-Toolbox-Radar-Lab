@@ -87,7 +87,7 @@ class TestRule01MutatingWithoutApproval:
 
 
 class TestRule02MissingAuthType:
-    """RULE-02: Missing or null authType (HIGH)."""
+    """RULE-02: Missing, null, or invalid authType (HIGH)."""
 
     def test_flagged_when_auth_type_missing(self) -> None:
         tool = {"name": "unauthenticated_tool", "target": "https://api.example.com"}
@@ -103,9 +103,25 @@ class TestRule02MissingAuthType:
         assert finding.rule_id == "RULE-02"
         assert finding.severity == Severity.HIGH
 
+    def test_flagged_when_auth_type_is_invalid_or_typo(self) -> None:
+        tool1 = {"name": "misconfigured_tool", "authType": "Ouath2"}
+        finding1 = check_missing_auth_type(tool1)
+        assert finding1 is not None
+        assert finding1.rule_id == "RULE-02"
+        assert finding1.rule_name == "INVALID_AUTH_TYPE"
+        assert finding1.severity == Severity.HIGH
+
+        tool2 = {"name": "misconfigured_tool2", "authType": "bearer-token"}
+        finding2 = check_missing_auth_type(tool2)
+        assert finding2 is not None
+        assert finding2.rule_name == "INVALID_AUTH_TYPE"
+
     def test_passed_when_valid_auth_type_present(self) -> None:
         tool = {"name": "secure_tool", "authType": "AgenticIdentityToken"}
         assert check_missing_auth_type(tool) is None
+        assert check_missing_auth_type({"name": "t1", "authType": "OAuth2"}) is None
+        assert check_missing_auth_type({"name": "t2", "authType": "UserEntraToken"}) is None
+        assert check_missing_auth_type({"name": "t3", "authType": "CustomKeys"}) is None
 
 
 class TestRule03StaticCredentialRisk:

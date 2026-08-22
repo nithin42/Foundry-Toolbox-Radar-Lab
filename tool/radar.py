@@ -197,7 +197,7 @@ def check_mutating_without_approval(tool: Dict[str, Any]) -> Optional[Finding]:
 
 
 def check_missing_auth_type(tool: Dict[str, Any]) -> Optional[Finding]:
-    """RULE-02: Flag connection without any authType set (HIGH)."""
+    """RULE-02: Flag connection without any authType or with an unrecognized authType (HIGH)."""
     name = str(tool.get("name", ""))
     raw_auth = tool.get("authType")
     norm_auth = normalize_auth_type(raw_auth)
@@ -213,6 +213,19 @@ def check_missing_auth_type(tool: Dict[str, Any]) -> Optional[Finding]:
             field_name="authType",
             snippet=f"authType: {raw_auth!r}",
         )
+
+    if norm_auth not in SUPPORTED_AUTH_TYPES:
+        return Finding(
+            rule_id="RULE-02",
+            rule_name="INVALID_AUTH_TYPE",
+            severity=Severity.HIGH,
+            tool_name=name or "<unnamed_tool>",
+            message=f"Unrecognized authentication type '{raw_auth}'. Not a valid Microsoft Foundry authType.",
+            remediation="Use one of the supported Foundry auth types: 'UserEntraToken', 'AgenticIdentityToken', 'OAuth2', or 'CustomKeys'.",
+            field_name="authType",
+            snippet=f"authType: {raw_auth!r}",
+        )
+
     return None
 
 
@@ -239,6 +252,9 @@ def check_static_credential_risk(tool: Dict[str, Any]) -> Optional[Finding]:
     return None
 
 
+# ASSUMPTION / TODO: confirm oauth2 vs UserEntraToken audience requirement once docs stabilize.
+# UserEntraToken specifically requires an audience App ID URI for Entra token exchange,
+# whereas OAuth2 connection definitions currently require client-id / client-secret / scopes.
 def check_missing_audience_user_entra_token(tool: Dict[str, Any]) -> Optional[Finding]:
     """RULE-04: Flag UserEntraToken missing target audience App ID URI (MEDIUM)."""
     name = str(tool.get("name", ""))

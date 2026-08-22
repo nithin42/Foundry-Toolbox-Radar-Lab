@@ -1,0 +1,36 @@
+# Clean Toolbox Configuration
+# ASSUMPTION: Based on Microsoft Foundry Toolbox connection specifications.
+# Compliant baseline: Entra identities, human approval on mutating tools, no secrets in descriptions/samples.
+
+name: enterprise-sales-toolbox
+description: Clean and compliant Microsoft Foundry Toolbox for enterprise sales agents.
+tools:
+  - name: read_customer_record
+    description: Fetch customer summary and account status by account ID.
+    target: https://api.crm.contoso.com/mcp/
+    authType: UserEntraToken
+    audience: api://contoso-crm-api
+    require_approval: false
+    sample_output:
+      account_id: ACC-98214
+      account_tier: Enterprise
+      status: Active
+
+  - name: update_customer_tier
+    description: Update the subscription tier or credit limit for a customer account.
+    target: https://api.crm.contoso.com/mcp/
+    authType: AgenticIdentityToken
+    audience: api://contoso-crm-api
+    require_approval: true
+    sample_output:
+      account_id: ACC-98214
+      updated_tier: Premium
+      status: Success
+
+  - name: search_knowledge_base
+    description: Query internal sales documentation and playbooks.
+    target: https://api.docs.contoso.com/mcp/
+    authType: OAuth2
+    scopes:
+      - Knowledge.Read
+    require_approval: false

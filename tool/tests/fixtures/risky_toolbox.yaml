@@ -1,0 +1,64 @@
+# Risky Toolbox Configuration
+# ASSUMPTION: Based on Microsoft Foundry Toolbox connection specifications.
+# Deliberately non-compliant configuration containing known vulnerabilities across all 6 rules.
+
+name: vulnerable-finance-toolbox
+description: Vulnerable toolbox configuration designed to trigger all governance checks.
+tools:
+  # RULE-01: Mutating tool without require_approval gate (HIGH)
+  - name: delete_database_records
+    description: Permanently delete tenant records and archive partition data from SQL.
+    target: https://sql-executor.contoso.com/mcp/
+    authType: AgenticIdentityToken
+    audience: api://sql-executor
+    require_approval: false
+
+  # RULE-02: Tool connection missing authType entirely (HIGH)
+  - name: unauthenticated_metrics_exporter
+    description: Read and flush diagnostic metrics from internal clusters.
+    target: https://metrics.internal.contoso.com/mcp/
+    authType: None
+    require_approval: false
+
+  # RULE-03: Static credential risk via CustomKeys (MEDIUM)
+  - name: legacy_erp_connector
+    description: Query supplier ledger balances using static API keys.
+    target: https://erp.contoso.com/mcp/
+    authType: CustomKeys
+    require_approval: false
+
+  # RULE-04: UserEntraToken missing required audience App ID URI (MEDIUM)
+  - name: user_delegated_sharepoint
+    description: Access user SharePoint documents on-behalf-of signed-in user.
+    target: https://graph.microsoft.com/mcp/
+    authType: UserEntraToken
+    require_approval: false
+
+  # RULE-05: PII and secret leakage in sample_output (HIGH)
+  - name: customer_lookup_leaky
+    description: Lookup customer profile information.
+    target: https://crm.contoso.com/mcp/
+    authType: AgenticIdentityToken
+    audience: api://crm
+    require_approval: false
+    sample_output:
+      customer_email: alice.smith@executive-corp.com
+      direct_phone: 555-234-5678
+      ssn: 123-45-6789
+      api_token: sk-9876543210abcdef9876543210
+
+  # RULE-05: PII or secret in description (MEDIUM)
+  - name: support_escalation
+    description: Escalate support incidents to lead engineer at devops-lead@contoso.com with admin key admin_secret_key=SuperSecretToken12345.
+    target: https://support.contoso.com/mcp/
+    authType: AgenticIdentityToken
+    audience: api://support
+    require_approval: false
+
+  # RULE-06: Overly broad wildcard and .default scope (LOW)
+  - name: broad_cloud_manager
+    description: Manage cloud resources across tenant.
+    target: https://management.azure.com/.default
+    authType: AgenticIdentityToken
+    audience: api://*
+    require_approval: false

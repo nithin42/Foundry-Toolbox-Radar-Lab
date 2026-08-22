@@ -1,0 +1,60 @@
+name: Radar Toolbox Governance Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - "**.yaml"
+      - "**.yml"
+      - "tool/**"
+      - ".github/workflows/radar-gate.yml"
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - "**.yaml"
+      - "**.yml"
+      - "tool/**"
+      - ".github/workflows/radar-gate.yml"
+
+jobs:
+  governance-gate:
+    name: Audit Toolbox Governance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: tool/requirements.txt
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tool/requirements.txt
+
+      - name: Run Radar Test Suite
+        run: |
+          python -m pytest tool/tests/test_radar.py -v
+
+      - name: Audit Clean Toolbox Fixture (Baseline)
+        run: |
+          python tool/radar.py tool/tests/fixtures/clean_toolbox.yaml --json
+
+      - name: Verify Radar Failure on Risky Fixture
+        run: |
+          echo "Verifying that radar properly blocks risky configurations..."
+          if python tool/radar.py tool/tests/fixtures/risky_toolbox.yaml --json; then
+            echo "Error: radar.py was expected to fail on risky_toolbox.yaml, but passed!"
+            exit 1
+          else
+            echo "Success: radar.py successfully caught HIGH risk findings and exited non-zero."
+          fi

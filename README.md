@@ -26,13 +26,6 @@ When building autonomous agents in **Microsoft Foundry**, connecting Model Conte
 1. **`radar.py`**: A fast, zero-external-dependency CLI scanner that audits your Microsoft Foundry Toolbox configurations before deployment, outputting human-readable summaries and machine-readable JSON for CI/CD gates.
 2. **3-Part Hands-on Workshop**: A complete, step-by-step curriculum teaching you how to build, secure, and gate multi-tool agent environments on Microsoft Foundry.
 
----
-
-## Why I built this
-
-[YOUR STORY HERE — one real sentence about a time an over-permissioned agent tool worried you. Don't let the agent invent this for you.]
-
----
 
 ## Quickstart
 

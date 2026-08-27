@@ -36,10 +36,10 @@ jobs:
           cache: "pip"
           cache-dependency-path: tool/requirements.txt
 
-      - name: Install Dependencies
+      - name: Install Package & Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r tool/requirements.txt
+          pip install -e .[dev]
 
       - name: Run Radar Test Suite
         run: |
@@ -47,14 +47,14 @@ jobs:
 
       - name: Audit Clean Toolbox Fixture (Baseline)
         run: |
-          python tool/radar.py tool/tests/fixtures/clean_toolbox.yaml --json
+          radar tool/tests/fixtures/clean_toolbox.yaml --json
 
       - name: Verify Radar Failure on Risky Fixture
         run: |
           echo "Verifying that radar properly blocks risky configurations..."
-          if python tool/radar.py tool/tests/fixtures/risky_toolbox.yaml --json; then
-            echo "Error: radar.py was expected to fail on risky_toolbox.yaml, but passed!"
+          if radar tool/tests/fixtures/risky_toolbox.yaml --json; then
+            echo "Error: radar was expected to fail on risky_toolbox.yaml, but passed!"
             exit 1
           else
-            echo "Success: radar.py successfully caught HIGH risk findings and exited non-zero."
+            echo "Success: radar successfully caught HIGH risk findings (including RULE-07) and exited non-zero."
           fi

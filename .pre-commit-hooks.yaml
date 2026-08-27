@@ -1,0 +1,8 @@
+- id: foundry-toolbox-radar
+  name: Foundry Toolbox Radar
+  description: Scan Microsoft Foundry Toolbox configurations for governance flaws, mutating tools without approval, prompt injection, and credential leakage.
+  entry: radar
+  language: python
+  types: [yaml]
+  files: (toolbox|tools|connections).*\.ya?ml$
+  additional_dependencies: ["PyYAML>=6.0.1"]

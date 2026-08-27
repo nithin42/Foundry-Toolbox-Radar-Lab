@@ -3,7 +3,7 @@
 
 Open-source governance and risk scanner for Microsoft Foundry Toolbox configurations.
 Audits tool definitions and connections for authorization creep, missing human-in-the-loop
-approval policies, static credential usage, and PII/secret data leakage before deployment.
+approval policies, static credential usage, prompt injection attacks, and PII/secret data leakage before deployment.
 """
 
 from __future__ import annotations
@@ -103,6 +103,34 @@ SECRET_PRIVATE_KEY_PATTERN = re.compile(
 # Overly broad scope patterns
 BROAD_SCOPE_WILDCARD = re.compile(r"\*")
 BROAD_SCOPE_DEFAULT = re.compile(r"/\.default\b", re.IGNORECASE)
+
+# Prompt injection & tool poisoning patterns (OWASP LLM01: Indirect Prompt Injection)
+PROMPT_INJECTION_PATTERNS = [
+    (
+        "Instruction Hijacking / Override",
+        re.compile(
+            r"(?i)\b(?:ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions|disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions|override\s+system\s+prompt|new\s+system\s+prompt|forget\s+(?:all\s+)?(?:previous|prior)\s+rules)\b"
+        ),
+    ),
+    (
+        "Role Alteration / Jailbreak",
+        re.compile(
+            r"(?i)\b(?:you\s+are\s+now\s+(?:an?\s+)?(?:unrestricted|developer\s+mode|dan|jailbreak|evil|god\s+mode)|act\s+as\s+an?\s+unrestricted\s+ai|bypass\s+(?:safety|security)\s+filters?)\b"
+        ),
+    ),
+    (
+        "Data Exfiltration Directive",
+        re.compile(
+            r"(?i)\b(?:exfiltrate\s+(?:data|tokens?|keys?|secrets?)|send\s+(?:all\s+)?(?:conversations?|user\s+data|secrets?|tokens?)\s+to\s+https?://|curl\s+-[A-Za-z]*X?\s*POST\s+https?://|fetch\s*\(\s*['\"]https?://[^'\"]+\?(?:token|secret|data)=)\b"
+        ),
+    ),
+    (
+        "Prompt Leaking Directive",
+        re.compile(
+            r"(?i)\b(?:repeat\s+(?:all\s+)?(?:words\s+)?above|print\s+(?:the\s+)?system\s+prompt|reveal\s+(?:your\s+)?instructions|output\s+initial\s+prompt)\b"
+        ),
+    ),
+]
 
 
 def normalize_auth_type(val: Any) -> Optional[str]:
@@ -358,6 +386,43 @@ def check_overly_broad_scope(tool: Dict[str, Any]) -> Optional[Finding]:
     return None
 
 
+def check_prompt_injection_and_tool_poisoning(tool: Dict[str, Any]) -> List[Finding]:
+    """RULE-07: Flag prompt injection or tool poisoning in description, name, or sample_output (HIGH)."""
+    name = str(tool.get("name", ""))
+    findings: List[Finding] = []
+
+    fields_to_check: List[Tuple[str, str]] = [
+        ("description", str(tool.get("description", ""))),
+        ("name", name),
+    ]
+
+    sample_output = tool.get("sample_output")
+    if sample_output is not None:
+        text = json.dumps(sample_output) if isinstance(sample_output, (dict, list)) else str(sample_output)
+        fields_to_check.append(("sample_output", text))
+
+    for field_name, content in fields_to_check:
+        if not content:
+            continue
+        for category, pattern in PROMPT_INJECTION_PATTERNS:
+            m = pattern.search(content)
+            if m:
+                findings.append(
+                    Finding(
+                        rule_id="RULE-07",
+                        rule_name="PROMPT_INJECTION_OR_TOOL_POISONING",
+                        severity=Severity.HIGH,
+                        tool_name=name or "<unnamed_tool>",
+                        message=f"Potential {category} detected in '{field_name}'. Tool metadata attempts to hijack agent control flow or exfiltrate context.",
+                        remediation="Remove instruction-override phrases, prompt injection attacks, and exfiltration directives from tool metadata.",
+                        field_name=field_name,
+                        snippet=m.group(0),
+                    )
+                )
+
+    return findings
+
+
 def extract_tools_from_config(config_data: Any) -> List[Dict[str, Any]]:
     """Extract tool entries from a loaded YAML configuration dictionary or list."""
     if isinstance(config_data, list):
@@ -414,6 +479,9 @@ def audit_toolbox_config(config_path: Path) -> List[Finding]:
         f6 = check_overly_broad_scope(tool)
         if f6:
             findings.append(f6)
+
+        # RULE-07
+        findings.extend(check_prompt_injection_and_tool_poisoning(tool))
 
     return findings
 

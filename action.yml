@@ -1,0 +1,47 @@
+name: 'Foundry Toolbox Radar Governance Scan'
+description: 'Audit Microsoft Foundry Toolbox YAML configurations for authorization creep, missing approval gates, prompt injection, and secret leaks.'
+author: 'nithin42'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  config:
+    description: 'Path to the Toolbox YAML configuration file to scan.'
+    required: true
+    default: 'toolbox.yaml'
+  json:
+    description: 'Emit machine-readable JSON output for pipeline parsing.'
+    required: false
+    default: 'false'
+  strict:
+    description: 'Fail on MEDIUM severity warnings in addition to HIGH findings.'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ${{ github.action_path }}/tool/requirements.txt
+
+    - name: Run Radar Governance Scan
+      shell: bash
+      run: |
+        ARGS="${{ inputs.config }}"
+        if [ "${{ inputs.json }}" = "true" ]; then
+          ARGS="$ARGS --json"
+        fi
+        if [ "${{ inputs.strict }}" = "true" ]; then
+          ARGS="$ARGS --strict"
+        fi
+        python ${{ github.action_path }}/tool/radar.py $ARGS

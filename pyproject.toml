@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "foundry-toolbox-radar"
+version = "0.2.0"
+description = "Pre-deployment governance, identity auditing, prompt injection detection, and data-leakage scanner for Microsoft Foundry Toolboxes and autonomous AI agents."
+readme = "README.md"
+authors = [
+    { name = "foundry-toolbox-radar-lab contributors" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "PyYAML>=6.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+radar = "tool.radar:main"
+foundry-radar = "tool.radar:main"
+
+[project.urls]
+Homepage = "https://github.com/nithin42/Foundry-Toolbox-Radar-Lab"
+Repository = "https://github.com/nithin42/Foundry-Toolbox-Radar-Lab"
+"Issue Tracker" = "https://github.com/nithin42/Foundry-Toolbox-Radar-Lab/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tool*"]

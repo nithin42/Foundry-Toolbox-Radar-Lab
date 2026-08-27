@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icon.png" width="160" alt="Foundry Toolbox Radar Logo" style="border-radius: 20px;">
+</p>
+
 # Foundry Toolbox Radar (`foundry-toolbox-radar-lab`)
 
 <p align="center">

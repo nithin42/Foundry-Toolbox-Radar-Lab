@@ -73,12 +73,6 @@ flowchart LR
 
 ---
 
-## Why I built this
-
-[YOUR STORY HERE — one real sentence about a time an over-permissioned agent tool worried you. Don't let the agent invent this for you.]
-
----
-
 ## Quickstart
 
 ### 1. Installation

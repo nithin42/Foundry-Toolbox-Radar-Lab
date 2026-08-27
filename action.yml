@@ -1,5 +1,5 @@
-name: 'Foundry Toolbox Radar Governance Scan'
-description: 'Audit Microsoft Foundry Toolbox YAML configurations for authorization creep, missing approval gates, prompt injection, and secret leaks.'
+name: 'Foundry Toolbox Radar'
+description: 'Governance, identity, prompt injection, and data-leak scanner for Microsoft Foundry Toolboxes.'
 author: 'nithin42'
 
 branding:

@@ -487,43 +487,54 @@ def audit_toolbox_config(config_path: Path) -> List[Finding]:
 
 
 def format_table(findings: List[Finding], config_path: Path) -> str:
-    """Format findings into a clean human-readable ASCII table."""
+    """Format findings into a crisp, modern terminal audit report."""
     lines: List[str] = []
-    lines.append("=" * 80)
-    lines.append(f" FOUNDRY TOOLBOX RADAR - GOVERNANCE AUDIT REPORT")
-    lines.append(f" Target File: {config_path.name}")
-    lines.append("=" * 80)
+    width = 86
+    sep_heavy = "=" * width
+    sep_light = "-" * width
+
+    lines.append(sep_heavy)
+    lines.append(f"  FOUNDRY TOOLBOX RADAR -- GOVERNANCE AUDIT REPORT")
+    lines.append(f"  Target: {config_path.name}")
+    lines.append(sep_heavy)
 
     if not findings:
-        lines.append("\n  [PASS] No governance or data-leakage risks detected.")
-        lines.append("  Toolbox configuration complies with governance baseline.\n")
-        lines.append("=" * 80)
+        lines.append("")
+        lines.append("  [PASS] Zero governance, identity, or prompt-injection risks detected.")
+        lines.append("  Toolbox configuration complies with all baseline governance policies.")
+        lines.append("")
+        lines.append(sep_heavy)
         return "\n".join(lines)
 
     high_count = sum(1 for f in findings if f.severity == Severity.HIGH)
     med_count = sum(1 for f in findings if f.severity == Severity.MEDIUM)
     low_count = sum(1 for f in findings if f.severity == Severity.LOW)
 
-    lines.append(f" Total Findings: {len(findings)} (HIGH: {high_count}, MEDIUM: {med_count}, LOW: {low_count})")
-    lines.append("-" * 80)
-    lines.append(f"{'SEVERITY':<10} | {'RULE ID':<9} | {'TOOL NAME':<18} | {'MESSAGE'}")
-    lines.append("-" * 80)
+    lines.append(
+        f"  Total Findings: {len(findings)} (HIGH: {high_count} | MEDIUM: {med_count} | LOW: {low_count})"
+    )
+    lines.append(sep_light)
+    lines.append(f"  {'SEV':<8} {'RULE':<9} {'TOOL NAME':<24} {'SUMMARY'}")
+    lines.append(sep_light)
 
     for f in findings:
-        sev_badge = f"[{f.severity.value}]"
-        tool_display = (f.tool_name[:16] + "..") if len(f.tool_name) > 18 else f.tool_name
-        lines.append(f"{sev_badge:<10} | {f.rule_id:<9} | {tool_display:<18} | {f.message}")
+        badge = f"[{f.severity.value}]"
+        tool_name = (f.tool_name[:21] + "...") if len(f.tool_name) > 24 else f.tool_name
+        lines.append(f"  {badge:<8} {f.rule_id:<9} {tool_name:<24} {f.message}")
         if f.snippet:
-            lines.append(f"  --> Snippet:     {f.snippet}")
-        lines.append(f"  --> Remediation: {f.remediation}")
-        lines.append("-" * 80)
+            clean_snippet = f.snippet.replace("\n", " ").strip()
+            if len(clean_snippet) > 60:
+                clean_snippet = clean_snippet[:57] + "..."
+            lines.append(f"           Evidence:    {clean_snippet}")
+        lines.append(f"           Remediation: {f.remediation}")
+        lines.append(sep_light)
 
-    lines.append("=" * 80)
+    lines.append(sep_heavy)
     if high_count > 0:
-        lines.append(f" [FAILED] {high_count} HIGH severity finding(s) detected. Gate blocked.")
+        lines.append(f"  [FAILED] {high_count} HIGH severity finding(s) detected. Gate blocked.")
     else:
-        lines.append(f" [WARNING] Audit passed with {med_count} MEDIUM and {low_count} LOW warnings.")
-    lines.append("=" * 80)
+        lines.append(f"  [WARNING] Audit passed with {med_count} MEDIUM and {low_count} LOW warnings.")
+    lines.append(sep_heavy)
 
     return "\n".join(lines)
 
